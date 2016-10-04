@@ -1,0 +1,82 @@
+---
+title: "Plotly Presentation"
+author: "Hugo van den Berg"
+date: "`r gsub(' +', ' ', format(Sys.Date(), '%B %e, %Y'))`"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+```
+
+## Plotly Presentation
+
+- Comparing lengths and widths of part of iris-flowers
+- Do petal length and width show a similar relation as sepal length and width?
+
+## Preparing data
+
+- Dataset `iris` from `datasets` package.
+- Separate parts of the flowers into separate observations for facetting in
+    `ggplot`.
+
+
+```{r prep_iris}
+iris.semilong <- iris %>%
+    tbl_df %>%
+    mutate(
+        row = rep(1:50, 3) # Row counter necessary for spreading later
+        ) %>%
+    gather(
+        key = Part,
+        value = Size,
+        -Species,
+        -row
+        ) %>%
+    separate(
+        col = Part,
+        into = c("Part", "Measure"),
+        sep = '\\.'
+        ) %>%
+    spread(
+        key = Measure,
+        value = Size
+        )
+```
+
+## Do the distributions look alike?
+
+```{r plot_iris, echo=FALSE}
+g <- iris.semilong %>%
+    ggplot(
+        aes(
+            x = Width,
+            y = Length,
+            colour = Species
+            )
+        ) +
+    geom_point(
+        alpha = .5
+        ) +
+    stat_ellipse( # 95% confidence ellipse under t-distribution
+        alpha = .4
+        ) +
+    facet_wrap(
+        ~Part
+        )
+
+ggplotly(g)
+```
+
+## Conclusion
+
+- The relation between petal length and petal width is roughly linear, even
+    across different species.
+- The relation between sepal width and length within each species is roughly
+    linear. Across different species there is a much less strong corelation
+    between length and width. Notably the setosa flowers have shorter sepals
+    for a certain sepal width than the other two species.
